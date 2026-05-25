@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Concrete — X Profile Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --black:    #0a0a0a;
+  --surface:  #111110;
+  --surface2: #181816;
+  --surface3: #1f1f1d;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #f0ede8;
+  --text2:    #8a8780;
+  --text3:    #4a4845;
+  --lime:     #c8f060;
+  --lime-dim: rgba(200,240,96,0.12);
+  --blue:     #5b9cf6;
+  --mono:     'IBM Plex Mono', monospace;
+  --display:  'Syne', sans-serif;
+  --r:        6px;
+  --rl:       10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--display);background:var(--black);color:var(--text);min-height:100vh;padding:24px 16px 60px;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4}
+.app{max-width:600px;margin:0 auto;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 0 20px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--lime);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:16px;height:16px}
+.logo-name{font-family:var(--display);font-size:15px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
+.logo-tag{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;line-height:1}
+.hdr-badge{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--lime);background:var(--lime-dim);border:1px solid rgba(200,240,96,0.2);padding:4px 10px;border-radius:20px;letter-spacing:0.05em;text-transform:uppercase}
+
+/* SEARCH */
+.search-wrap{margin-bottom:20px}
+.search-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;display:block}
+.search-row{display:flex;gap:8px}
+.at-wrap{position:relative;flex:1;display:flex;align-items:center}
+.at-sym{position:absolute;left:12px;font-family:var(--mono);font-size:14px;color:var(--lime);pointer-events:none;z-index:1}
+.search-input{width:100%;height:44px;padding:0 14px 0 28px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);font-family:var(--mono);font-size:14px;color:var(--text);outline:none;transition:border-color 0.15s,background 0.15s}
+.search-input::placeholder{color:var(--text3)}
+.search-input:focus{border-color:var(--lime);background:var(--surface3)}
+.btn{height:44px;padding:0 18px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);font-family:var(--display);font-size:13px;font-weight:600;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all 0.15s;white-space:nowrap}
+.btn:hover{background:var(--surface3)}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--lime);color:var(--black);border-color:var(--lime);font-weight:700}
+.btn-primary:hover{background:#d6f570;border-color:#d6f570}
+.btn-dark{background:#000;color:#fff;border-color:#333}
+.btn-dark:hover{background:#111}
+.btn-sm{height:32px;padding:0 12px;font-size:12px}
+.quick-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.quick-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+.qbtn{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s}
+.qbtn:hover{border-color:var(--lime);color:var(--lime)}
+
+/* STATES */
+.empty{text-align:center;padding:52px 20px;border:1px dashed var(--border);border-radius:var(--rl)}
+.empty-icon{font-size:28px;margin-bottom:14px;opacity:0.5}
+.empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.2px}
+.empty-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:300px;margin:0 auto 18px}
+.empty-note{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;text-align:left;line-height:1.8;display:inline-block;max-width:340px}
+.empty-note span{color:var(--lime)}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-family:var(--mono);font-size:12px;color:var(--text3);border:1px dashed var(--border);border-radius:var(--rl)}
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--lime);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PROFILE CARD */
+.pcard{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rl);overflow:hidden;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ptop{padding:20px;display:flex;gap:16px;align-items:flex-start;border-bottom:1px solid var(--border);position:relative}
+.ptop-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--lime) 0%,transparent 60%)}
+.av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--surface3),var(--surface2));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--lime);flex-shrink:0}
+.pname{font-family:var(--display);font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;letter-spacing:-0.2px}
+.phandle{font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:8px}
+.pbio{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px}
+.pmeta{display:flex;gap:14px;flex-wrap:wrap}
+.mitem{font-family:var(--mono);font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)}
+.stat{padding:14px 12px;text-align:center;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px}
+.stat-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em}
+.section{padding:18px 20px;border-bottom:1px solid var(--border)}
+.sec-label{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sec-label-line{flex:1;height:1px;background:var(--border)}
+.ai-chip{font-size:9px;background:var(--lime-dim);color:var(--lime);padding:2px 7px;border-radius:20px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;border:1px solid rgba(200,240,96,0.2)}
+.analysis-text{font-size:13px;color:var(--text2);line-height:1.8}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+.tag{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--text2);background:var(--surface2)}
+.tag-green{border-color:rgba(200,240,96,0.3);color:var(--lime);background:var(--lime-dim)}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.score-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px}
+.score-label{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px}
+.score-bar-wrap{height:2px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.score-bar{height:100%;background:var(--lime);border-radius:2px;transition:width 1s cubic-bezier(0.22,1,0.36,1)}
+.score-val{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+.score-val span{font-size:10px;color:var(--text3);font-weight:400}
+
+/* CIRCLES */
+.circ-header{padding:12px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-bottom:1px solid var(--border)}
+.circ-label{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:6px}
+.circ-status{font-weight:400;font-style:italic;color:var(--text3);margin-left:2px}
+.net-canvas-wrap{width:100%;height:220px;background:var(--surface2);overflow:hidden}
+.circles-list{display:flex;flex-direction:column;padding:12px 20px 0;gap:6px}
+.circ-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);transition:border-color 0.15s}
+.circ-row:hover{border-color:var(--border2)}
+.circ-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.circ-info{flex:1;min-width:0}
+.circ-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.circ-handle{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.circ-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.cpill{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:20px;background:var(--surface3);border:1px solid var(--border);color:var(--text3)}
+.circ-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.circ-score{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+.tier-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.05em}
+.tier-core{background:rgba(91,156,246,0.15);color:#5b9cf6;border:1px solid rgba(91,156,246,0.25)}
+.tier-inner{background:rgba(200,240,96,0.1);color:var(--lime);border:1px solid rgba(200,240,96,0.2)}
+.tier-outer{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
+.net-legend{display:flex;gap:14px;padding:10px 20px 0;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--text3)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* BOTTOM BARS */
+.share-bar{padding:12px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--surface2)}
+.share-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em}
+.card-foot{padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)}
+.foot-hint{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.sig{padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid var(--border);background:linear-gradient(to right,transparent,var(--lime-dim),transparent)}
+.sig-text{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em}
+.sig-link{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--lime);text-decoration:none;letter-spacing:0.05em;border-bottom:1px solid rgba(200,240,96,0.3);transition:color 0.15s}
+.sig-link:hover{color:#fff;border-color:#fff}
+
+/* ERROR */
+.errbox{padding:14px 16px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:var(--r);font-family:var(--mono);font-size:12px;color:#ff8080;display:flex;gap:10px;align-items:flex-start;line-height:1.6}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--lime);color:var(--black);font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 16px;border-radius:20px;opacity:0;transition:all 0.2s;pointer-events:none;white-space:nowrap;z-index:999}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="#0a0a0a"/><rect x="9" y="1" width="6" height="6" rx="1" fill="#0a0a0a" opacity="0.5"/><rect x="1" y="9" width="6" height="6" rx="1" fill="#0a0a0a" opacity="0.5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="#0a0a0a"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">concrete.xyz</div>
+        <div class="logo-tag">Profile Explorer</div>
+      </div>
+    </div>
+    <span class="hdr-badge">Beta</span>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-label">X / Twitter Handle</span>
+    <div class="search-row">
+      <div class="at-wrap">
+        <span class="at-sym">@</span>
+        <input class="search-input" type="text" id="hi" placeholder="ConcreteXYZ" autocomplete="off" spellcheck="false"/>
+      </div>
+      <button class="btn btn-primary" id="ab" onclick="analyze()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Analyze
+      </button>
+    </div>
+    <div class="quick-row">
+      <span class="quick-label">Try —</span>
+      <button class="qbtn" onclick="qs('ConcreteXYZ')">@ConcreteXYZ</button>
+      <button class="qbtn" onclick="qs('VitalikButerin')">@VitalikButerin</button>
+      <button class="qbtn" onclick="qs('aaveaave')">@aaveaave</button>
+      <button class="qbtn" onclick="qs('binance')">@binance</button>
+    </div>
+  </div>
+
+  <div id="res">
+    <div class="empty">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-title">Explore any X / Twitter profile</div>
+      <div class="empty-sub">AI-powered DeFi identity breakdown, influence scores, and mutual circles mapping — built for the Concrete Protocol ecosystem.</div>
+      <div class="empty-note">
+        <span>→</span> Enter any handle and click <span>Analyze</span><br>
+        <span>→</span> Scores update in real time<br>
+        <span>→</span> Generate mutual circles after analysis<br>
+        <span>→</span> Share results directly to X
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var H='', P=null;
+
+// ── Points to the local proxy server ──────────────────
+var API_URL = '/api/claude';
+// ──────────────────────────────────────────────────────
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function qs(h){document.getElementById('hi').value=h;analyze()}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2200)}
+
+async function callClaude(sys,usr){
+  var r=await fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1200,
+      system:sys,
+      messages:[{role:'user',content:usr}]
+    })
+  });
+  if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error((e.error&&e.error.message)||'HTTP '+r.status)}
+  var d=await r.json();
+  var raw=(d.content||[]).map(function(b){return b.text||''}).join('');
+  return JSON.parse(raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim());
+}
+
+async function analyze(){
+  var h=document.getElementById('hi').value.trim().replace(/^@/,'');
+  if(!h)return;
+  H=h;P=null;
+  var btn=document.getElementById('ab');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Analyzing…';
+  document.getElementById('res').innerHTML='<div class="loading"><span class="spin"></span> Analyzing @'+esc(h)+'…</div>';
+  var sys='You are an AI analyst for Concrete Protocol, a DeFi yield infrastructure platform. '
+    +'Return ONLY a raw JSON object — no markdown fences, no backticks, no preamble or trailing text. '
+    +'Schema: {"name":"string","handle":"@string","bio":"string","location":"string","joined":"Month Year",'
+    +'"verified":true,"avatar_initials":"2 chars","stats":{"tweets":"string","following":"string",'
+    +'"followers":"string","likes":"string"},"topics":["x4"],"analysis":"2-3 sentences",'
+    +'"scores":{"influence":0,"defi_alignment":0,"engagement":0,"credibility":0},'
+    +'"recent_themes":["x3"],"concrete_relevance":"string"} '
+    +'Scores 0-100 integers. Use real knowledge for known accounts. Return ONLY the JSON.';
+  try{
+    P=await callClaude(sys,'Analyze Twitter/X profile: @'+h);
+    renderProfile(P);
+  }catch(e){
+    document.getElementById('res').innerHTML='<div class="errbox">⚠ <div><strong>Analysis failed</strong><br>'+esc(e.message)+'</div></div>';
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Analyze';
+}
+
+function shareOnX(){
+  if(!P||!H)return;
+  var sc=P.scores||{};
+  var text='🔍 @'+H+' — X Profile Analysis\n\n'
+    +'📊 DeFi Alignment: '+Math.round(sc.defi_alignment||0)+'/100\n'
+    +'⚡ Influence: '+Math.round(sc.influence||0)+'/100\n'
+    +'✅ Credibility: '+Math.round(sc.credibility||0)+'/100\n\n'
+    +(P.topics||[]).slice(0,3).map(function(t){return'#'+t.replace(/\s+/g,'')}).join(' ')
+    +'\n\nExplored via @ConcreteXYZ Profile Explorer\nBuilt by @fishacrypt';
+  window.open('https://x.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+}
+function copyAnalysis(){
+  if(!P)return;
+  var sc=P.scores||{};
+  var txt='@'+H+' — Concrete Protocol Profile Analysis\n\n'+(P.analysis||'')+'\n\nScores:\n'
+    +'• Influence: '+Math.round(sc.influence||0)+'/100\n'
+    +'• DeFi Alignment: '+Math.round(sc.defi_alignment||0)+'/100\n'
+    +'• Engagement: '+Math.round(sc.engagement||0)+'/100\n'
+    +'• Credibility: '+Math.round(sc.credibility||0)+'/100\n\n'
+    +'Topics: '+(P.topics||[]).join(', ')+'\n\nBuilt by @fishacrypt | concrete.xyz';
+  navigator.clipboard.writeText(txt).then(function(){toast('✓ Copied!')}).catch(function(){toast('Could not copy')});
+}
+function copyLink(){
+  navigator.clipboard.writeText('https://x.com/'+H).then(function(){toast('✓ Link copied!')}).catch(function(){toast('Could not copy')});
+}
+function shareCircles(){
+  var text='🕸️ @'+H+' Mutual Circles Map\n\nMapped with @ConcreteXYZ Profile Explorer\n\n#DeFi #Web3 #CryptoTwitter\n\nBuilt by @fishacrypt';
+  window.open('https://x.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+}
+
+function renderProfile(p){
+  var sc=p.scores||{};
+  var cards=[
+    {l:'Influence',v:Math.round(sc.influence||0)},
+    {l:'DeFi alignment',v:Math.round(sc.defi_alignment||0)},
+    {l:'Engagement',v:Math.round(sc.engagement||0)},
+    {l:'Credibility',v:Math.round(sc.credibility||0)}
+  ].map(function(x){
+    return'<div class="score-card"><div class="score-label">'+x.l+'</div>'
+      +'<div class="score-bar-wrap"><div class="score-bar" style="width:0%" data-w="'+x.v+'%"></div></div>'
+      +'<div class="score-val">'+x.v+'<span> /100</span></div></div>';
+  }).join('');
+  var tt=(p.topics||[]).map(function(t){return'<span class="tag">'+esc(t)+'</span>'}).join('');
+  var rt=(p.recent_themes||[]).map(function(t){return'<span class="tag tag-green">#'+esc(t.replace(/\s+/g,''))+'</span>'}).join('');
+  var ver=p.verified?'<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" fill="#1d9bf0"/><path d="M6 10l3 3 5-5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';
+  var handle=(p.handle||'@'+H).replace(/^@/,'');
+  var st=p.stats||{};
+
+  document.getElementById('res').innerHTML=
+    '<div class="pcard">'
+    +'<div class="ptop"><div class="ptop-accent"></div>'
+    +'<div class="av">'+esc((p.avatar_initials||'??').slice(0,2))+'</div>'
+    +'<div style="flex:1;min-width:0">'
+    +'<div class="pname">'+esc(p.name||'Unknown')+ver+'</div>'
+    +'<div class="phandle">@'+esc(handle)+'</div>'
+    +'<div class="pbio">'+esc(p.bio||'')+'</div>'
+    +'<div class="pmeta">'
+    +(p.location?'<span class="mitem">📍 '+esc(p.location)+'</span>':'')
+    +(p.joined?'<span class="mitem">⌛ '+esc(p.joined)+'</span>':'')
+    +'</div></div></div>'
+    +'<div class="stats-row">'
+    +'<div class="stat"><div class="stat-val">'+esc(st.tweets||'—')+'</div><div class="stat-lbl">Tweets</div></div>'
+    +'<div class="stat"><div class="stat-val">'+esc(st.following||'—')+'</div><div class="stat-lbl">Following</div></div>'
+    +'<div class="stat"><div class="stat-val">'+esc(st.followers||'—')+'</div><div class="stat-lbl">Followers</div></div>'
+    +'<div class="stat"><div class="stat-val">'+esc(st.likes||'—')+'</div><div class="stat-lbl">Likes</div></div>'
+    +'</div>'
+    +'<div class="section"><div class="sec-label">Analysis <span class="ai-chip">Claude AI</span><span class="sec-label-line"></span></div>'
+    +'<div class="analysis-text">'+esc(p.analysis||'')+'</div>'
+    +'<div class="tags">'+tt+'</div></div>'
+    +'<div class="section"><div class="sec-label">Protocol Fit Scores <span class="sec-label-line"></span></div>'
+    +'<div class="score-grid">'+cards+'</div></div>'
+    +(p.concrete_relevance
+      ?'<div class="section"><div class="sec-label">Concrete Relevance <span class="sec-label-line"></span></div>'
+       +'<div class="analysis-text">'+esc(p.concrete_relevance)+'</div>'
+       +(rt?'<div class="tags" style="margin-top:10px">'+rt+'</div>':'')+'</div>':'')
+    +'<div>'
+    +'<div class="circ-header">'
+    +'<div class="circ-label">⬡ Mutual Circles <span class="circ-status" id="gcs">— not generated</span></div>'
+    +'<button class="btn btn-sm" id="gcb" onclick="genCircles()">✦ Generate</button>'
+    +'</div><div id="cb"></div></div>'
+    +'<div class="share-bar"><span class="share-lbl">Share</span>'
+    +'<button class="btn btn-sm btn-dark" onclick="shareOnX()">𝕏 Post to X</button>'
+    +'<button class="btn btn-sm" onclick="copyAnalysis()">⎘ Copy</button>'
+    +'<button class="btn btn-sm" onclick="copyLink()">⊕ Copy link</button>'
+    +'</div>'
+    +'<div class="card-foot"><span class="foot-hint">AI-generated · not live Twitter data</span></div>'
+    +'<div class="sig"><span class="sig-text">Built by</span>'
+    +'<a class="sig-link" href="https://x.com/fishacrypt" target="_blank" rel="noopener noreferrer">Fishacrypt</a>'
+    +'<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="opacity:.4"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+    +'</div></div>';
+
+  setTimeout(function(){
+    document.querySelectorAll('.score-bar[data-w]').forEach(function(b){
+      var w=b.getAttribute('data-w');requestAnimationFrame(function(){b.style.width=w});
+    });
+  },80);
+}
+
+async function genCircles(){
+  if(!H)return;
+  var btn=document.getElementById('gcb'),body=document.getElementById('cb'),status=document.getElementById('gcs');
+  if(!btn||!body||!status)return;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Mapping…';
+  status.textContent='— generating…';
+  body.innerHTML='<div class="loading" style="height:80px"><span class="spin"></span> Mapping circles for @'+esc(H)+'…</div>';
+  var ctx=P?JSON.stringify({bio:P.bio,topics:P.topics}):'{}';
+  var sys='You are a social graph analyst for Concrete Protocol. '
+    +'Return ONLY a raw JSON object — no markdown, no backticks. '
+    +'Schema: {"summary":"string","cluster_labels":["x3"],'
+    +'"circles":[{"name":"string","handle":"no @ symbol","initials":"2 chars",'
+    +'"color":"#hex dark color","tier":"core|inner|outer","interaction_score":0,'
+    +'"interactions":["replies","retweets","likes","quotes"],"role":"string"}]} '
+    +'Exactly 8 people: 2 core, 3 inner, 3 outer. interaction_score integers 0-100. Return ONLY the JSON.';
+  try{
+    var data=await callClaude(sys,'Generate mutual circles for @'+H+' context: '+ctx);
+    renderCircles(data);
+    status.textContent='— '+(data.circles||[]).length+' connections mapped';
+  }catch(e){
+    body.innerHTML='<div style="padding:16px 20px"><div class="errbox">⚠ <div><strong>Failed</strong><br>'+esc(e.message)+'</div></div></div>';
+    status.textContent='— error';
+  }
+  btn.disabled=false;btn.innerHTML='↺ Regenerate';
+}
+
+function renderCircles(data){
+  var body=document.getElementById('cb');if(!body)return;
+  var tl={core:'Core',inner:'Inner',outer:'Outer'};
+  var tc={core:'tier-core',inner:'tier-inner',outer:'tier-outer'};
+  var lc={core:'#5b9cf6',inner:'#c8f060',outer:'#4a4845'};
+  var rows=(data.circles||[]).map(function(c){
+    var t=c.tier in tl?c.tier:'outer';
+    var pills=(c.interactions||[]).map(function(i){return'<span class="cpill">'+esc(i)+'</span>'}).join('');
+    return'<div class="circ-row"><div class="circ-av" style="background:'+esc(c.color||'#333')+'">'+esc((c.initials||'??').slice(0,2))+'</div>'
+      +'<div class="circ-info"><div class="circ-name">'+esc(c.name||'')+'</div>'
+      +'<div class="circ-handle">@'+esc(c.handle||'')+' · '+esc(c.role||'')+'</div>'
+      +'<div class="circ-pills">'+pills+'</div></div>'
+      +'<div class="circ-right"><div class="circ-score">'+Math.round(c.interaction_score||0)+'</div>'
+      +'<span class="tier-badge '+tc[t]+'">'+tl[t]+'</span></div></div>';
+  }).join('');
+  var ctags=(data.cluster_labels||[]).map(function(l){return'<span class="tag">'+esc(l)+'</span>'}).join('');
+  var legend=Object.keys(tl).map(function(k){return'<div class="leg-item"><div class="leg-dot" style="background:'+lc[k]+'"></div>'+tl[k]+' circle</div>'}).join('');
+  body.innerHTML=
+    '<div class="net-canvas-wrap"><canvas id="ncanv"></canvas></div>'
+    +'<div class="net-legend">'+legend+'</div>'
+    +(ctags?'<div style="padding:8px 20px 0"><div class="tags">'+ctags+'</div></div>':'')
+    +'<div class="circles-list">'+rows+'</div>'
+    +'<div style="padding:12px 20px 16px;display:flex;gap:8px">'
+    +'<button class="btn btn-sm btn-dark" onclick="shareCircles()">𝕏 Share circles</button>'
+    +'</div>';
+  drawNet(data.circles||[]);
+}
+
+function drawNet(circles){
+  var canvas=document.getElementById('ncanv');if(!canvas)return;
+  var W=canvas.parentElement.clientWidth||560,H2=220;
+  canvas.width=W;canvas.height=H2;
+  var ctx=canvas.getContext('2d'),cx=W/2,cy=H2/2;
+  var tr={core:58,inner:106,outer:152},tc={core:'#5b9cf6',inner:'#c8f060',outer:'#4a4845'},nr={core:14,inner:11,outer:8};
+  var by={core:[],inner:[],outer:[]};
+  circles.forEach(function(x){var t=x.tier in by?x.tier:'outer';by[t].push(x)});
+  var nodes=[];
+  ['core','inner','outer'].forEach(function(tier){
+    by[tier].forEach(function(x,i){
+      var n=by[tier].length,a=(2*Math.PI/n)*i-Math.PI/2;
+      nodes.push({x:cx+tr[tier]*Math.cos(a),y:cy+tr[tier]*Math.sin(a),d:x,tier:tier,r:nr[tier]});
+    });
+  });
+  ctx.clearRect(0,0,W,H2);
+  ['core','inner','outer'].forEach(function(tier){ctx.beginPath();ctx.arc(cx,cy,tr[tier],0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;ctx.stroke()});
+  nodes.forEach(function(n){ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(n.x,n.y);ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;ctx.stroke()});
+  ctx.beginPath();ctx.arc(cx,cy,16,0,Math.PI*2);
+  var g=ctx.createRadialGradient(cx,cy,0,cx,cy,16);g.addColorStop(0,'#c8f060');g.addColorStop(1,'#8ab030');
+  ctx.fillStyle=g;ctx.fill();
+  ctx.fillStyle='#0a0a0a';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('@',cx,cy);
+  nodes.forEach(function(n){
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle=tc[n.tier];ctx.fill();
+    ctx.fillStyle=n.tier==='inner'?'#0a0a0a':'#fff';
+    ctx.font='bold '+Math.max(7,n.r-3)+'px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText((n.d.initials||'?').charAt(0),n.x,n.y);
+    if(n.tier!=='outer'){ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='8px sans-serif';ctx.textBaseline='top';ctx.fillText('@'+(n.d.handle||'').slice(0,9),n.x,n.y+n.r+3)}
+  });
+}
+
+document.getElementById('hi').addEventListener('keydown',function(ev){if(ev.key==='Enter')analyze()});
+</script>
+</body>
+</html>

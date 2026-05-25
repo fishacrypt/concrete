@@ -1,0 +1,12 @@
+{
+  "name": "concrete-profile-explorer",
+  "version": "1.0.0",
+  "description": "Concrete XYZ X/Twitter Profile Explorer — Built by Fishacrypt",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": { "node": ">=14" },
+  "license": "MIT"
+}
